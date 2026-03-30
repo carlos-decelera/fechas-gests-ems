@@ -5,6 +5,9 @@ from typing import Optional, List
 from fastapi import FastAPI, HTTPException, Request, BackgroundTasks
 from pydantic import BaseModel
 import httpx
+from dotenv import load_dotenv
+
+load_dotenv()
 
 # ───────────────────────────────────────────────────────────────────────────
 # CONFIGURACIÓN
@@ -79,7 +82,7 @@ class AttioClient:
 app = FastAPI(title="Fecha de EM's a Guests Management")
 attio = AttioClient(ATTIO_TOKEN)
 
-@app.post("webhook")
+@app.post("/webhook")
 async def handle_webhook(request: Request, background_tasks: BackgroundTasks):
     payload = await request.json()
     events = payload.get("events", [])
