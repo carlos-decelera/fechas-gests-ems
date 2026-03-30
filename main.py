@@ -96,8 +96,8 @@ class AttioClient:
             payload["data"]["entry_values"]["arrival_date_58"] = to_attio_date(arrival)
             payload["data"]["entry_values"]["arrival_day_status"] = get_day_from_iso(arrival)
         if departure:
-            payload["data"]["entry_values"]["departure_date_1"] = to_attio_date(arrival)
-            payload["data"]["entry_values"]["departure_day_status"] = get_day_from_iso(arrival)
+            payload["data"]["entry_values"]["departure_date_1"] = to_attio_date(departure)
+            payload["data"]["entry_values"]["departure_day_status"] = get_day_from_iso(departure)
 
         resp = await client.put(url, headers=self.headers, json=payload)
         resp.raise_for_status()
