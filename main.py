@@ -29,6 +29,16 @@ def get_day_from_iso(date_str: str) -> Optional[str]:
         return str(dt.day)
     except (ValueError, TypeError):
         return None
+    
+def to_attio_date(date_str: str) -> Optional[str]:
+    if not date_str:
+        return None
+    try:
+        clean = date_str.replace("Z", "+00:00")
+        dt = datetime.fromisoformat(clean)
+        return dt.strftime("%Y-%m-%d")
+    except (ValueError, TypeError):
+        return None
 
 # ───────────────────────────────────────────────────────────────────────────
 # CLIENTE DE LA API
@@ -75,8 +85,8 @@ class AttioClient:
                 "parent_record_id": person_id,
                 "parent_object": "people",
                 "entry_values": {
-                    "arrival_data_58": arrival,
-                    "departure_date_1": departure,
+                    "arrival_data_58": to_attio_date(arrival),
+                    "departure_date_1": to_attio_date(departure),
                     "arrival_day_status": get_day_from_iso(arrival),
                     "departure_day_status": get_day_from_iso(departure)
                 }
