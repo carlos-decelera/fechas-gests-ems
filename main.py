@@ -56,7 +56,7 @@ class AttioClient:
 
         arrival = safe_extract("arrival_date")
         departure = safe_extract("departure_date")
-        
+
         return arrival, departure
 
     async def get_associated_person(self, client: httpx.AsyncClient, record_id: str):
@@ -92,6 +92,26 @@ class AttioClient:
 app = FastAPI(title="Fecha de EM's a Guests Management")
 attio = AttioClient(ATTIO_TOKEN)
 
+# 1. Extraemos la lógica en una función separada async
+async def process_webhook(entry_id: str, parent_record_id: str):
+    try:
+        async with httpx.AsyncClient() as client:
+            arrival, departure = await attio.get_entry_dates(client, entry_id)
+            person_id = await attio.get_associated_person(client, parent_record_id)
+
+            if not person_id:
+                raise ValueError("No se encontró persona asociada")
+
+            result = await attio.upsert_guest_entry(client, person_id, arrival, departure)
+            logger.info(f"Sincronización exitosa para person_id: {person_id}")
+
+    except httpx.HTTPStatusError as e:
+        logger.error(f"Error de API de Attio: {e.response.text}")
+    except Exception as e:
+        logger.exception("Error inesperado procesando el webhook")
+
+
+# 2. En el endpoint, añadimos la tarea y retornamos de inmediato
 @app.post("/webhook")
 async def handle_webhook(request: Request, background_tasks: BackgroundTasks):
     payload = await request.json()
@@ -106,35 +126,13 @@ async def handle_webhook(request: Request, background_tasks: BackgroundTasks):
     entry_id = event.get("id", {}).get("entry_id")
     parent_record_id = event.get("parent_record_id")
 
-    # Validamos rapido para evitar anidacion
     if actor_type != "workspace-member" or list_id != EM_LIST_ID:
         logger.info(f"Evento ignorado: Actor={actor_type}, List={list_id}")
         return {"status": "ignored"}
 
-    # Ejecutamos la logica pesada
-    try:
-        async with httpx.AsyncClient() as client:
-            # Obtenemos fechas
-            arrival, departure = await attio.get_entry_dates(client, entry_id)
-
-            # Obtenemos persona asociada
-            person_id = await attio.get_associated_person(client, parent_record_id)
-
-            if not person_id:
-                raise ValueError("No se encontró persona asociada")
-
-            # Sincronizamos con Guest Mangement
-            result = await attio.upsert_guest_entry(client, person_id, arrival, departure)
-
-            logger.info(f"Sincronización exitosa para person_id: {person_id}")
-            return {"status": "success", "data": result}
-
-    except httpx.HTTPStatusError as e:
-        logger.error(f"Error de API de Attio: {e.response.text}")
-        raise HTTPException(status_code=502, detail="Error al conectar con Attio")
-    except Exception as e:
-        logger.exception("Error inesperado, procesando el webhook")
-        raise HTTPException(status_code=502, detail=str(e))
+    # Registramos la tarea y respondemos inmediatamente
+    background_tasks.add_task(process_webhook, entry_id, parent_record_id)
+    return {"status": "accepted"}
 
 if __name__ == "__main__":
     import uvicorn
