@@ -42,11 +42,21 @@ class AttioClient:
         url = f"{BASE_URL}/lists/em_s_menorca/entries/{entry_id}"
         resp = await client.get(url, headers=self.headers)
         resp.raise_for_status()
-        data = resp.json().get("data", {})
 
+        data = resp.json().get("data", {})
         entry_values = data.get("entry_values", {})
-        arrival = entry_values.get("arrival_date", [{}])[0].get("value")
-        departure = entry_values.get("departure_date", [{}])[0].get("value")
+
+        # Función interna rápida para extraer valores de forma segura
+        def safe_extract(field_name):
+            values = entry_values.get(field_name, [])
+            # Verificamos que la lista exista y tenga al menos un elemento
+            if isinstance(values, list) and len(values) > 0:
+                return values[0].get("value")
+            return None
+
+        arrival = safe_extract("arrival_date")
+        departure = safe_extract("departure_date")
+        
         return arrival, departure
 
     async def get_associated_person(self, client: httpx.AsyncClient, record_id: str):
