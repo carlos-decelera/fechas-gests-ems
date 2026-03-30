@@ -88,13 +88,17 @@ class AttioClient:
                 "parent_record_id": person_id,
                 "parent_object": "people",
                 "entry_values": {
-                    "arrival_data_58": to_attio_date(arrival) if arrival else None,
-                    "departure_date_1": to_attio_date(departure) if departure else None,
-                    "arrival_day_status": get_day_from_iso(arrival) if arrival else None,
-                    "departure_day_status": get_day_from_iso(departure) if departure else None
                 }
             }
         }
+
+        if arrival:
+            payload["data"]["entry_values"]["arrival_date_58"] = to_attio_date(arrival)
+            payload["data"]["entry_values"]["arrival_day_status"] = get_day_from_iso(arrival)
+        if departure:
+            payload["data"]["entry_values"]["departure_date_1"] = to_attio_date(arrival)
+            payload["data"]["entry_values"]["departure_day_status"] = get_day_from_iso(arrival)
+
         resp = await client.put(url, headers=self.headers, json=payload)
         resp.raise_for_status()
         return resp.json()
