@@ -46,7 +46,10 @@ def to_attio_date(date_str: str) -> Optional[str]:
 
 class AttioClient:
     def __init__(self, token: str):
-        self.headers = {"Authorization": f"Bearer {token}"}
+        self.headers = {
+            "Authorization": f"Bearer {token}",
+            "Content-Type": "application/json"
+            }
 
     async def get_entry_dates(self, client: httpx.AsyncClient, entry_id: str):
         url = f"{BASE_URL}/lists/em_s_menorca/entries/{entry_id}"
@@ -85,10 +88,10 @@ class AttioClient:
                 "parent_record_id": person_id,
                 "parent_object": "people",
                 "entry_values": {
-                    "arrival_data_58": to_attio_date(arrival),
-                    "departure_date_1": to_attio_date(departure),
-                    "arrival_day_status": get_day_from_iso(arrival),
-                    "departure_day_status": get_day_from_iso(departure)
+                    "arrival_data_58": to_attio_date(arrival) if arrival else None,
+                    "departure_date_1": to_attio_date(departure) if departure else None,
+                    "arrival_day_status": get_day_from_iso(arrival) if arrival else None,
+                    "departure_day_status": get_day_from_iso(departure) if departure else None
                 }
             }
         }
