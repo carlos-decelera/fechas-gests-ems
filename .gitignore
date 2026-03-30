@@ -1,0 +1,26 @@
+# Entorno virtual (muy importante)
+venv/
+env/
+.venv/
+
+# Variables de entorno (Seguridad)
+.env
+.env.local
+
+# Archivos temporales de Python
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Distribución / Empaquetado
+dist/
+build/
+*.egg-info/
+
+# Logs
+*.log
+
+# IDEs (Opcional, pero recomendado)
+.vscode/
+.idea/
+.DS_Store
